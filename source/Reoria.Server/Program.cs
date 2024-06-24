@@ -1,2 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿using Reoria.Application.Interfaces;
+using Reoria.Server.Application;
+
+IGameApplicationBuilder _ = new ServerApplicationBuilder(args).CreateApplication<ServerApplication>();

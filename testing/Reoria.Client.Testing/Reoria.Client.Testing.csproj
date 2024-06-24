@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\source\Reoria.Client\Reoria.Client.csproj" />
-    <ProjectReference Include="..\..\source\Reoria.Server\Reoria.Server.csproj" />
     <ProjectReference Include="..\..\source\Reoria\Reoria.csproj" />
   </ItemGroup>
 
