@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Reoria.Application.Interfaces;
+using Reoria.Application.Networking.Interfaces;
+using Reoria.Application.Networking.LiteNetLib;
 
 namespace Reoria.Application;
 
@@ -13,6 +15,7 @@ public abstract class GameApplicationBuilder(string[]? args) : IGameApplicationB
         IHostBuilder builder = Host.CreateDefaultBuilder(this.args)
         .ConfigureServices((hostContext, services) =>
         {
+            _ = services.AddSingleton<INetworkService, LiteNetLibNetworkService>();
             _ = services.AddSingleton<IGameApplication, TApplicationType>();
             _ = services.AddHostedService(provider => provider.GetService<IGameApplication>() ?? throw new NullReferenceException());
         });
