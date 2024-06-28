@@ -2,5 +2,5 @@
 
 public interface IGameApplicationBuilder
 {
-    IGameApplicationBuilder CreateApplication<TApplicationType>() where TApplicationType : class, IGameApplication;
+    IGameApplicationBuilder CreateApplication();
 }

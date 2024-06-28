@@ -91,7 +91,7 @@ public class LiteNetLibNetworkService : INetworkService
 
     private void Listener_Server_PeerConnectedEvent(NetPeer peer)
     {
-        this.logger.LogInformation("Server got connection: {peer}", peer);
+        this.logger.LogInformation("Server got connection: {peer} ({number} of {maxConnections})", peer, this.manager.ConnectedPeersCount, this.maxConnections);
         NetDataWriter writer = new();
         writer.Put($"Hello {peer}!");
         peer.Send(writer, DeliveryMethod.ReliableOrdered);
