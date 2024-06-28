@@ -9,7 +9,7 @@ public class ClientApplication(IServiceProvider services) : GameApplication(serv
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
         await Task.Run(() => this.logger.LogInformation("Client application initialized."), cancellationToken);
-        await Task.Run(() => this.networkService.StartClient(), cancellationToken);
+        await Task.Run(() => this.networkService.StartClient("localhost", 9050, "FakeConnectionKey"), cancellationToken);
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

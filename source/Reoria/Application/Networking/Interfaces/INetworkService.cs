@@ -3,8 +3,8 @@
 public interface INetworkService
 {
     void PollEvents();
-    void StartClient(string ipAddress = "localhost", int port = 9050, string connectionKey = "SomeConnectionKey");
-    void StartServer(int port = 9050, int maxConnections = 10, string connectionKey = "SomeConnectionKey");
+    void StartClient(string ipAddress, int port, string connectionKey);
+    void StartServer(int port, int maxConnections, string connectionKey);
     void StopClient();
     void StopServer();
 }
