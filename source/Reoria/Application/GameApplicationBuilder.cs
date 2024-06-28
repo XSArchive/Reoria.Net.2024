@@ -12,16 +12,18 @@ public abstract class GameApplicationBuilder<TApplicationType>(string[]? args) :
 
     public virtual IGameApplicationBuilder CreateApplication()
     {
-        IHostBuilder builder = Host.CreateDefaultBuilder(this.args);
+        IHostBuilder builder = this.OnCreateHostBuilder(Host.CreateDefaultBuilder(this.args));
 
         _ = builder.ConfigureServices(this.OnConfigureServices);
 
-        IHost app = builder.Build();
+        IHost app = this.OnBuildApplication(builder.Build());
 
         app.Run();
 
         return this;
     }
+
+    protected virtual IHostBuilder OnCreateHostBuilder(IHostBuilder builder) => builder;
 
     protected virtual void OnConfigureServices(HostBuilderContext context, IServiceCollection services)
     {
@@ -29,4 +31,6 @@ public abstract class GameApplicationBuilder<TApplicationType>(string[]? args) :
         _ = services.AddSingleton<IGameApplication, TApplicationType>();
         _ = services.AddHostedService(provider => provider.GetService<IGameApplication>() ?? throw new NullReferenceException());
     }
+
+    protected virtual IHost OnBuildApplication(IHost app) => app;
 }
