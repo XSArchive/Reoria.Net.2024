@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Reoria.Application.Interfaces;
 using Reoria.Application.Networking.Interfaces;
 using Reoria.Application.Networking.LiteNetLib;
@@ -14,8 +16,6 @@ public abstract class GameApplicationBuilder<TApplicationType>(string[]? args) :
     {
         IHostBuilder builder = this.OnCreateHostBuilder(Host.CreateDefaultBuilder(this.args));
 
-        _ = builder.ConfigureServices(this.OnConfigureServices);
-
         IHost app = this.OnBuildApplication(builder.Build());
 
         app.Run();
@@ -23,7 +23,12 @@ public abstract class GameApplicationBuilder<TApplicationType>(string[]? args) :
         return this;
     }
 
-    protected virtual IHostBuilder OnCreateHostBuilder(IHostBuilder builder) => builder;
+    protected virtual IHostBuilder OnCreateHostBuilder(IHostBuilder builder) => builder
+        .ConfigureAppConfiguration(this.OnConfigureAppConfiguration)
+        .ConfigureServices(this.OnConfigureServices)
+        .ConfigureLogging(this.ConfigureLogging);
+
+    protected virtual void OnConfigureAppConfiguration(HostBuilderContext context, IConfigurationBuilder builder) { }
 
     protected virtual void OnConfigureServices(HostBuilderContext context, IServiceCollection services)
     {
@@ -31,6 +36,8 @@ public abstract class GameApplicationBuilder<TApplicationType>(string[]? args) :
         _ = services.AddSingleton<IGameApplication, TApplicationType>();
         _ = services.AddHostedService(provider => provider.GetService<IGameApplication>() ?? throw new NullReferenceException());
     }
+
+    protected virtual void ConfigureLogging(HostBuilderContext context, ILoggingBuilder logging) { }
 
     protected virtual IHost OnBuildApplication(IHost app) => app;
 }
