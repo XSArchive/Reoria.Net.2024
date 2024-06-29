@@ -5,6 +5,5 @@ public interface INetworkService
     void PollEvents();
     void StartClient(string ipAddress, int port, string connectionKey);
     void StartServer(int port, int maxConnections, string connectionKey);
-    void StopClient();
-    void StopServer();
+    void Stop();
 }

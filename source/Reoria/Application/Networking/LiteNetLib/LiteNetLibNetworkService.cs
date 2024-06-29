@@ -49,16 +49,6 @@ public class LiteNetLibNetworkService : INetworkService
         }
     }
 
-    public void StopClient()
-    {
-        if (this.manager.IsRunning)
-        {
-            this.logger.LogInformation("Stopping network client...");
-            this.manager.Stop();
-            this.networkMode = NetworkMode.None;
-        }
-    }
-
     public void StartServer(int port, int maxConnections, string connectionKey)
     {
         if (!this.manager.IsRunning)
@@ -75,13 +65,79 @@ public class LiteNetLibNetworkService : INetworkService
         }
     }
 
-    public void StopServer()
+    public void Stop()
     {
         if (this.manager.IsRunning)
         {
-            this.logger.LogInformation("Stopping network server...");
+            this.logger.LogInformation("Stopping network {type}...", this.networkMode.ToString().ToLower());
             this.manager.Stop();
             this.networkMode = NetworkMode.None;
+        }
+    }
+
+    public void SendTo(NetDataWriter writer, DeliveryMethod deliveryMethod)
+    {
+        if (this.networkMode == NetworkMode.Client)
+        {
+            NetPeer serverPeer = this.manager.FirstPeer;
+
+            if (serverPeer != null)
+            {
+                serverPeer.Send(writer, deliveryMethod);
+            }
+            else
+            {
+                this.logger.LogWarning("No server connection available to send data.");
+            }
+        }
+        else
+        {
+            this.logger.LogWarning("SendTo without a peer can only be called in client mode.");
+        }
+    }
+
+    public void SendTo(NetPeer peer, NetDataWriter writer, DeliveryMethod deliveryMethod)
+    {
+        if (this.networkMode == NetworkMode.Server)
+        {
+            peer.Send(writer, deliveryMethod);
+        }
+        else
+        {
+            this.logger.LogWarning("SendTo with a peer can only be called in server mode.");
+        }
+    }
+
+    public void SendToAllBut(NetPeer excludedPeer, NetDataWriter writer, DeliveryMethod deliveryMethod)
+    {
+        if (this.networkMode == NetworkMode.Server)
+        {
+            foreach (NetPeer peer in this.manager.ConnectedPeerList)
+            {
+                if (peer != excludedPeer)
+                {
+                    peer.Send(writer, deliveryMethod);
+                }
+            }
+        }
+        else
+        {
+            this.logger.LogWarning("SendToAllBut can only be called in server mode.");
+        }
+    }
+
+    public void SendToAll(NetDataWriter writer, DeliveryMethod deliveryMethod)
+    {
+        if(this.networkMode == NetworkMode.Server)
+        {
+            foreach (NetPeer peer in this.manager.ConnectedPeerList)
+            {
+                peer.Send(writer, deliveryMethod);
+            }
+        }
+        else
+        {
+            this.logger.LogWarning("SendToAll can only be called in server mode.");
         }
     }
 
@@ -124,14 +180,18 @@ public class LiteNetLibNetworkService : INetworkService
             this.logger.LogInformation("Server got connection: {peer} ({number} of {maxConnections})", peer, this.manager.ConnectedPeersCount, this.maxConnections);
             NetDataWriter writer = new();
             writer.Put($"Hello {peer}!");
-            peer.Send(writer, DeliveryMethod.ReliableOrdered);
+            this.SendTo(peer, writer, DeliveryMethod.ReliableOrdered);
+            
+            writer.Reset();
+            writer.Put($"{peer} has joined the server!");
+            this.SendToAllBut(peer, writer, DeliveryMethod.ReliableOrdered);
         }
         else if (this.networkMode == NetworkMode.Client)
         {
             this.logger.LogInformation("Client got connection to server: {peer}", peer);
             NetDataWriter writer = new();
             writer.Put($"Hello server {peer}!");
-            peer.Send(writer, DeliveryMethod.ReliableOrdered);
+            this.SendTo(writer, DeliveryMethod.ReliableOrdered);
         }
     }
 
@@ -140,11 +200,15 @@ public class LiteNetLibNetworkService : INetworkService
         if(this.networkMode == NetworkMode.Server)
         {
             this.logger.LogInformation("Server lost connection with {peer}, Reason: {disconnectInfo}", peer, disconnectInfo.Reason);
+
+            NetDataWriter writer = new();
+            writer.Put($"{peer} has left the server!");
+            this.SendToAllBut(peer, writer, DeliveryMethod.ReliableOrdered);
         }
         else if(this.networkMode == NetworkMode.Client)
         {
             this.logger.LogInformation("Client disconnected from server {peer}, Reason: {disconnectInfo}", peer, disconnectInfo.Reason);
-            this.StopClient();
+            this.Stop();
         }
     }
 
@@ -168,11 +232,13 @@ public class LiteNetLibNetworkService : INetworkService
 
         if (this.networkMode == NetworkMode.Server)
         {
-            
+            NetDataWriter writer = new();
+            writer.Put($"{endPoint} has left the server!");
+            this.SendToAll(writer, DeliveryMethod.ReliableOrdered);
         }
         else if (this.networkMode == NetworkMode.Client)
         {
-            this.StopClient();
+            this.Stop();
         }
     }
 }

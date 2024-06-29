@@ -14,7 +14,7 @@ public class ServerApplication(IServiceProvider services) : GameApplication(serv
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        await Task.Run(this.networkService.StopServer, cancellationToken);
+        await Task.Run(this.networkService.Stop, cancellationToken);
         await Task.Run(() => this.logger.LogInformation("Server application stopped."), cancellationToken);
     }
 }
